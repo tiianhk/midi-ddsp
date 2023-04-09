@@ -1,2 +1,2 @@
-# MIDI-DDSP with timbre embeddings
+# MIDI-DDSP with continuous timbre control
 
