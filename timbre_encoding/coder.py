@@ -40,7 +40,7 @@ class TimbreCoder():
         if self.method == 'lda':
             """pretrained standardization and LDA transformation"""
             model = joblib.load(self.model_dir+'.joblib')
-            return lambda x: np.squeeze(model.transform(x))
+            return lambda x: model.transform(x)
         elif self.method == 'openl3':
             """time averaged openl3 embedding"""
             model = openl3.models.load_audio_embedding_model(
@@ -51,7 +51,7 @@ class TimbreCoder():
             """pretrained triplet models"""
             model = tf.keras.models.load_model(self.model_dir, compile=False)
             backbone = model.get_layer('backbone')
-            return lambda x: tf.squeeze(backbone(x)).numpy()
+            return lambda x: backbone(x).numpy()
         else:
             raise ValueError('invalid method')
 
@@ -68,14 +68,14 @@ class TimbreCoder():
                 feature = np.stack([self.preprocessor(audio[i]) for i in range(audio.shape[0])])
         else:
             if self.method == 'openl3':
-                feature = audio
+                feature = [audio]
             else:
                 feature = self.preprocessor(audio)[np.newaxis,...]
         """encoding"""
         return self.coder(feature)
 
-    def __call__(self, audio=None, inst_id=None,
-                 inst_a_id=None, inst_b_id=None, interp_ratio=None):
+    def __call__(self, audio=None, inst=None,
+                 inst1=None, inst2=None, interp_ratio=None):
         """
             Args:
                 audio: np.array or tf.Tensor,
@@ -87,14 +87,20 @@ class TimbreCoder():
                     get the linear interpolation between two centroids
             Returns:
                 embedding: np.array,
-                    'lda' shape (12,) or (n, 12),
-                    'openl3' shape (512,) or (n, 512),
-                    'flat_triplet' or 'hierarchical_triplet' shape (64,) or (n, 64)
+                    'lda' shape (n, 12),
+                    'openl3' shape (n, 512),
+                    'flat_triplet' or 'hierarchical_triplet' shape (n, 64)
         """
+        print('timbre coder is called.')
         if audio is not None:
+            print(f'processing audio with shape {audio.shape}')
             return self.get_embedding_from_audio(audio)
-        elif inst_id is not None:
-            return self.centroids[inst_id]
+        elif inst is not None:
+            assert inst < len(self.centroids)
+            return self.centroids[inst][np.newaxis,...]
         else:
-            return interp_ratio * self.centroids[inst_a_id] + (1 - interp_ratio) * self.centroids[inst_b_id]
+            assert inst1 < len(self.centroids) and inst2 < len(self.centroids)
+            assert interp_ratio > 0 and interp_ratio < 1
+            emb = interp_ratio * self.centroids[inst1] + (1 - interp_ratio) * self.centroids[inst2]
+            return emb[np.newaxis,...]
 

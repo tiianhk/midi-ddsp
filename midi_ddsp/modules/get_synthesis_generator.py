@@ -27,6 +27,7 @@ from midi_ddsp.modules.synth_params_decoder import MidiToSynthAutoregDecoder, \
   MidiNoiseToHarmonicDecoder
 from midi_ddsp.modules.midi_decoder import ExpressionMidiDecoder, \
   MidiDecoder
+from timbre_encoding.coder import TimbreCoder
 
 
 def get_midi_decoder(hp):
@@ -74,7 +75,8 @@ def get_midi_decoder(hp):
     midi_decoder_decoder = MidiToF0LDAutoregDecoder()
 
   if hp.midi_decoder_type == 'interpretable_conditioning':
-    """decoder wrapper"""
+    """wrapper for midi decoder"""
+    timbre_coder = TimbreCoder(hp.timbre_coder_type) if hp.timbre_encoding else None
     midi_decoder = ExpressionMidiDecoder(
       decoder=midi_decoder_decoder,
       decoder_type=hp.midi_decoder_decoder_net,
@@ -82,6 +84,7 @@ def get_midi_decoder(hp):
       multi_instrument=hp.multi_instrument,
       position_code=hp.position_code,
       without_note_expression=hp.without_note_expression,
+      timbre_coder=timbre_coder,
     )
 
   elif hp.midi_decoder_type == 'midi_decoder':
