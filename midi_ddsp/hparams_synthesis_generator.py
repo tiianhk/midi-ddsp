@@ -67,3 +67,8 @@ class hparams:
   win_length = hop_length * 2
   frame_shift_ms = 1000 / sample_rate * frame_size
   fmin = 40
+
+  # Timbre encoding
+  timbre_encoding = False
+  timbre_coder_type = 'lda'
+

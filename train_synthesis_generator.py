@@ -244,6 +244,13 @@ if __name__ == '__main__':
                       help='The mode to run, train or eval.')
   parser.add_argument('--name', type=str, default='logs_synthesis_generator',
                       help='The name of the log folder.')
+  """timbre encoding"""
+  parser.add_argument('--timbre_encoding', type=str2bool, nargs='?',
+                      const=True, default=hp.timbre_encoding,
+                      help='whether to use a pretrained timbre coder '
+                           'to replace the instrument id input.')
+  parser.add_argument('--timbre_coder_type', type=str, default=hp.inst_emb_method,
+                      help='the method for producing instrument embeddings.')
 
   # Change hp according to argparse.
   args = parser.parse_args()
