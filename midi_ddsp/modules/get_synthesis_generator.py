@@ -29,7 +29,6 @@ from midi_ddsp.modules.midi_decoder import ExpressionMidiDecoder, \
   MidiDecoder
 
 
-
 def get_midi_decoder(hp):
   """Get midi_decoder from hyperparameters."""
   z_preconditioning_stack = nn.FcStackOut(ch=512, layers=5, n_out=256)
@@ -68,12 +67,14 @@ def get_midi_decoder(hp):
                      ('noise_magnitudes', 65)),
     )
   elif hp.midi_decoder_decoder_net == 'rnn_synth_params':
+    """midi decoder"""
     midi_decoder_decoder = MidiToSynthAutoregDecoder()
 
   elif hp.midi_decoder_decoder_net == 'rnn_f0_ld':
     midi_decoder_decoder = MidiToF0LDAutoregDecoder()
 
   if hp.midi_decoder_type == 'interpretable_conditioning':
+    """decoder wrapper"""
     midi_decoder = ExpressionMidiDecoder(
       decoder=midi_decoder_decoder,
       decoder_type=hp.midi_decoder_decoder_net,

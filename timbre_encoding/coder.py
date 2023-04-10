@@ -9,15 +9,20 @@ warnings.filterwarnings("ignore")
 
 
 class TimbreCoder():
-    """class for mapping audio into timbre embeddings."""
-    
+    """generate timbre embeddings."""
+
     def __init__(self, method):
         self.method = method
         self.model_dir = os.path.join('./timbre_encoding/models/', method)
+        self.centroids = np.load(os.path.join('./timbre_encoding/centroids/', method+'.npy'))
         self.preprocessor = self._load_preprocessor()
         self.coder = self._load_coder()
         self.sample_rate = 16000
-    
+        self.ndim = self._ndim_dict()[method]
+
+    def _ndim_dict(self):
+        return {'lda': 12, 'openl3': 512, 'flat_triplet': 64, 'hierarchical_triplet': 64}
+
     def _load_preprocessor(self):
         if self.method == 'lda':
             """time averaged mfcc"""
@@ -25,12 +30,12 @@ class TimbreCoder():
         elif self.method == 'openl3':
             return None
         elif self.method == 'flat_triplet' or self.method == 'hierarchical_triplet':
-            """melspectrogram with channel dimension"""
+            """melspectrogram"""
             return lambda y: librosa.feature.melspectrogram(
                 y=y, sr=self.sample_rate, power=1)[...,np.newaxis]
         else:
             raise ValueError('invalid method')
-    
+
     def _load_coder(self):
         if self.method == 'lda':
             """pretrained standardization and LDA transformation"""
@@ -49,38 +54,47 @@ class TimbreCoder():
             return lambda x: tf.squeeze(backbone(x)).numpy()
         else:
             raise ValueError('invalid method')
-    
-    def get_embedding(self, audio):
+
+    def get_embedding_from_audio(self, audio):
         assert len(audio.shape)<=2 and audio.shape[-1]==64000
         self.batch = len(audio.shape)==2
         if isinstance(audio, tf.Tensor):
             audio = audio.numpy()
+        """preprocessing"""
         if self.batch:
             if self.method == 'openl3':
-                # openl3 takes list of audio as input
                 feature = [audio[i] for i in range(audio.shape[0])]
             else:
-                # use librosa to preprocess one track at a time
                 feature = np.stack([self.preprocessor(audio[i]) for i in range(audio.shape[0])])
         else:
             if self.method == 'openl3':
                 feature = audio
             else:
-                # add batch dimension for single track
                 feature = self.preprocessor(audio)[np.newaxis,...]
+        """encoding"""
         return self.coder(feature)
 
-    def __call__(self, audio):
+    def __call__(self, audio=None, inst_id=None,
+                 inst_a_id=None, inst_b_id=None, interp_ratio=None):
         """
             Args:
                 audio: np.array or tf.Tensor,
                     single or batched 4-second audio,
-                    shape (64000,) or (n, 64000)
+                    shape (64000,) or (n, 64000),
+                    audio is converted to embeddings by a model
+                inst_id: retrieve the centroid embedding for the instrument
+                inst_a_id, inst_b_id, interp_ratio:
+                    get the linear interpolation between two centroids
             Returns:
                 embedding: np.array,
-                    'lda' shape (12,) or (n, 12)
-                    'openl3' shape (512,) or (n, 512)
+                    'lda' shape (12,) or (n, 12),
+                    'openl3' shape (512,) or (n, 512),
                     'flat_triplet' or 'hierarchical_triplet' shape (64,) or (n, 64)
         """
-        return self.get_embedding(audio)
+        if audio is not None:
+            return self.get_embedding_from_audio(audio)
+        elif inst_id is not None:
+            return self.centroids[inst_id]
+        else:
+            return interp_ratio * self.centroids[inst_a_id] + (1 - interp_ratio) * self.centroids[inst_b_id]
 

@@ -51,19 +51,26 @@ class ExpressionMidiDecoder(tfkl.Layer):
 
   def __init__(self, decoder, z_preconditioning_stack, multi_instrument=False,
                position_code='none', decoder_type='dilated_conv',
-               without_note_expression=False):
+               without_note_expression=False, timbre_coder=None):
     self.decoder_type = decoder_type
     self.z_preconditioning_stack = z_preconditioning_stack
     self.decoder = decoder
     self.position_code = position_code
     self.multi_instrument = multi_instrument
+    self.timbre_coder = timbre_coder
     if multi_instrument:
-      self.instrument_emb = tfkl.Embedding(NUM_INST, 64)
+      if timbre_coder is None:
+        """instrument id to instrument embedding"""
+        self.instrument_emb = tfkl.Embedding(NUM_INST, 64)
+      else:
+        """timbre_coder encodes audio as instrument embedding"""
+        if timbre_coder.ndim != 64:
+          self.instrument_emb_proj = tfkl.Dense(64)
     self.without_note_expression = without_note_expression
     super().__init__()
 
   def gen_params_from_cond(self, conditioning_dict, midi_features,
-                           instrument_id=None, synth_params=None,
+                           instrument_id=None, audio=None, synth_params=None,
                            training=False, display_progressbar=False):
     q_pitch, q_vel, f0_loss_weights, onsets, offsets = midi_features
     # note-wise conditioning
@@ -103,10 +110,17 @@ class ExpressionMidiDecoder(tfkl.Layer):
 
     # --- Precondition
     z_midi_decoder = self.z_preconditioning_stack(z_conditioning)
+    """timbre encoding"""
     if self.multi_instrument:
+      if self.timbre_coder is None:
+        inst_emb = self.instrument_emb(instrument_id)
+      else:
+        if self.timbre_coder.ndim == 64:
+          inst_emb = self.timbre_coder(audio=audio)
+        else:
+          inst_emb = self.instrument_emb_proj(self.timbre_coder(audio=audio))
       instrument_z = tf.tile(
-        self.instrument_emb(instrument_id)[:, tf.newaxis, :],
-        [1, z_midi_decoder.shape[1], 1])
+        inst_emb[:, tf.newaxis, :], [1, z_midi_decoder.shape[1], 1])
       z_midi_decoder = tf.concat([z_midi_decoder, instrument_z], -1)
 
     # --- MIDI Decoding
@@ -142,12 +156,15 @@ class ExpressionMidiDecoder(tfkl.Layer):
                                            midi_features)
 
     instrument_id = features['instrument_id'] if self.multi_instrument else None
+    audio = features['audio'] if self.timbre_coder is not None else None
+
     if self.decoder_type == 'rnn_f0_ld':
       synth_params = features
     z_midi_decoder, params_pred = self.gen_params_from_cond(conditioning_dict,
                                                             midi_features,
                                                             instrument_id=
                                                             instrument_id,
+                                                            audio=audio,
                                                             synth_params=
                                                             synth_params,
                                                             training=training)
