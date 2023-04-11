@@ -14,7 +14,7 @@ class TimbreCoder():
     def __init__(self, method):
         self.method = method
         self.model_dir = os.path.join('./timbre_encoding/models/', method)
-        # to-do: store centroids of midi-ddsp, can be computed by layer with name 'inst_emb_layer'
+        # to-do: store centroids of midi-ddsp computed by synthesis_generator.midi_decoder.instrument_emb
         self.centroids = np.load(os.path.join('./timbre_encoding/centroids/', method+'.npy'))
         self.preprocessor = self._load_preprocessor()
         self.coder = self._load_coder()
@@ -97,9 +97,9 @@ class TimbreCoder():
                     'openl3' shape (n, 512),
                     'flat_triplet' or 'hierarchical_triplet' shape (n, 64)
         """
-        print('timbre coder is called.')
+        # print('timbre coder is called.')
         if audio is not None:
-            print(f'processing audio with shape {audio.shape}')
+            # print(f'processing audio with shape {audio.shape}')
             return self.get_embedding_from_audio(audio)
         elif inst is not None:
             assert inst < len(self.centroids)

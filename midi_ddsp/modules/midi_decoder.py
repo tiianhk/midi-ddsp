@@ -60,7 +60,7 @@ class ExpressionMidiDecoder(tfkl.Layer):
     self.timbre_coder = timbre_coder
     if multi_instrument:
       if timbre_coder is None:
-        self.instrument_emb = tfkl.Embedding(NUM_INST, 64, name='inst_emb_layer')
+        self.instrument_emb = tfkl.Embedding(NUM_INST, 64)
       else:
         if timbre_coder.ndim != 64:
           self.instrument_emb_proj = tfkl.Dense(64)
@@ -132,12 +132,12 @@ class ExpressionMidiDecoder(tfkl.Layer):
             inst_emb = self.timbre_coder(inst1=inst1, inst2=inst2, interp_ratio=interp_ratio)
           if self.timbre_coder.ndim != 64:
             inst_emb = self.instrument_emb_proj(inst_emb)
-      print(f'inst emb shape {inst_emb.shape}')
-      print(f'z_midi_decoder shape {z_midi_decoder.shape}\nconcat with inst emb..')
+      # print(f'inst emb shape {inst_emb.shape}')
+      # print(f'z_midi_decoder shape {z_midi_decoder.shape}\nconcat with inst emb..')
       instrument_z = tf.tile(
         inst_emb[:, tf.newaxis, :], [1, z_midi_decoder.shape[1], 1])
       z_midi_decoder = tf.concat([z_midi_decoder, instrument_z], -1)
-      print(f'z_midi_decoder shape {z_midi_decoder.shape}')
+      # print(f'z_midi_decoder shape {z_midi_decoder.shape}')
 
     # --- MIDI Decoding
     if self.decoder_type == 'dilated_conv':

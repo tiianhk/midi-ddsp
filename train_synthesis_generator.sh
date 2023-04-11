@@ -33,7 +33,7 @@ reverb=true
 use_gan=true
 lambda_recon=1.0
 reverb_length=48000
-name=logs_expression_generator
+name=synthesis_generator_without_timbre_coder
 timbre_encoding=false
 timbre_coder_type='lda'
 
@@ -60,12 +60,3 @@ python train_synthesis_generator.py --batch_size $batch_size \
   --timbre_encoding $timbre_encoding \
   --timbre_coder_type $timbre_coder_type
 
-synthesis_generator_weight_path=./logs/${name}/${training_steps}
-
-python dump_expression_generator_dataset.py --model_path $synthesis_generator_weight_path \
-  --data_dir $data_dir --output_dir ./logs/expression_generator_dataset
-
-python train_expression_generator.py \
-  --training_set_path ./logs/expression_generator_dataset/pickles/train_separate_piece.pickle \
-  --test_set_path ./logs/expression_generator_dataset/pickles/test.pickle \
-  --training_steps 5000
