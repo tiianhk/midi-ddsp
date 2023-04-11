@@ -268,8 +268,7 @@ def synthesize_mono_midi(synthesis_generator, expression_generator, midi_file,
   conditioning_df = expression_generator_output_to_conditioning_df(
     expression_generator_outputs['output'], note_sequence)
   midi_audio, midi_control_params, midi_synth_params = conditioning_df_to_audio(
-    synthesis_generator, conditioning_df,
-    tf.constant([instrument_id]),
+    synthesis_generator, conditioning_df, instrument_id,
     display_progressbar=display_progressbar)
   if output_dir is not None:
     save_wav(midi_audio[0].numpy(), os.path.join(output_dir, os.path.basename(

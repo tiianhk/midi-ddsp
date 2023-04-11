@@ -14,6 +14,7 @@ class TimbreCoder():
     def __init__(self, method):
         self.method = method
         self.model_dir = os.path.join('./timbre_encoding/models/', method)
+        # to-do: store centroids of midi-ddsp
         self.centroids = np.load(os.path.join('./timbre_encoding/centroids/', method+'.npy'))
         self.preprocessor = self._load_preprocessor()
         self.coder = self._load_coder()
@@ -21,7 +22,7 @@ class TimbreCoder():
         self.ndim = self._ndim_dict()[method]
 
     def _ndim_dict(self):
-        return {'lda': 12, 'openl3': 512, 'flat_triplet': 64, 'hierarchical_triplet': 64}
+        return {'lda': 12, 'openl3': 512, 'flat_triplet': 64, 'hierarchical_triplet': 64, 'midi-ddsp': 64}
 
     def _load_preprocessor(self):
         if self.method == 'lda':
@@ -33,6 +34,8 @@ class TimbreCoder():
             """melspectrogram"""
             return lambda y: librosa.feature.melspectrogram(
                 y=y, sr=self.sample_rate, power=1)[...,np.newaxis]
+        elif self.method == 'midi-ddsp':
+            return None
         else:
             raise ValueError('invalid method')
 
@@ -52,10 +55,13 @@ class TimbreCoder():
             model = tf.keras.models.load_model(self.model_dir, compile=False)
             backbone = model.get_layer('backbone')
             return lambda x: backbone(x).numpy()
+        elif self.method == 'midi-ddsp':
+            return None
         else:
             raise ValueError('invalid method')
 
     def get_embedding_from_audio(self, audio):
+        assert self.method != 'midi-ddsp'
         assert len(audio.shape)<=2 and audio.shape[-1]==64000
         self.batch = len(audio.shape)==2
         if isinstance(audio, tf.Tensor):
