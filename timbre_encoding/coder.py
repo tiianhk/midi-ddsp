@@ -14,7 +14,7 @@ class TimbreCoder():
     def __init__(self, method):
         self.method = method
         self.model_dir = os.path.join('./timbre_encoding/models/', method)
-        # to-do: store centroids of midi-ddsp
+        # to-do: store centroids of midi-ddsp, can be computed by layer with name 'inst_emb_layer'
         self.centroids = np.load(os.path.join('./timbre_encoding/centroids/', method+'.npy'))
         self.preprocessor = self._load_preprocessor()
         self.coder = self._load_coder()

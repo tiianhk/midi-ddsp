@@ -16,6 +16,7 @@
 
 import tensorflow as tf
 import ddsp
+import numpy as np
 
 tfk = tf.keras
 tfkl = tfk.layers
@@ -60,9 +61,20 @@ class ReverbModules(tfkl.Layer):
                                 batch_size)
     if self.num_reverb == 1 or reverb_number is None:  # unified reverb
       reverb_number = tf.repeat(tf.constant([0], dtype=tf.int64), batch_size)
-    ir_magnitudes = self.magnitudes_embedding(reverb_number)
+    if not isinstance(reverb_number, tuple):
+      ir_magnitudes = self.magnitudes_embedding(reverb_number)
+    else:
+      """frequency domain interpolation"""
+      reverb_number_1, reverb_number_2, interp_ratio = reverb_number
+      ir_1 = self.magnitudes_embedding(reverb_number_1).numpy()
+      ir_2 = self.magnitudes_embedding(reverb_number_2).numpy()
+      IR_1 = np.fft.rfft(ir_1)
+      IR_2 = np.fft.rfft(ir_2)
+      IR = interp_ratio * IR_1 + (1 - interp_ratio) * IR_2
+      ir_magnitudes = np.fft.irfft(IR)
     if not training:
       ir_magnitudes = ir_magnitudes * get_exp_decay(
         self.reverb_length, 16000, 4)[tf.newaxis, ...]
     output = self.reverb(audio, ir_magnitudes)
     return output
+

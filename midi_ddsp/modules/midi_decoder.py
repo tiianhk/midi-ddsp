@@ -111,6 +111,8 @@ class ExpressionMidiDecoder(tfkl.Layer):
     """timbre encoding"""
     if self.multi_instrument:
       if self.timbre_coder is None:
+        if isinstance(instrument_id, int):
+          instrument_id = tf.constant([instrument_id])
         inst_emb = self.instrument_emb(instrument_id)
       else:
         if audio is not None:
@@ -121,7 +123,6 @@ class ExpressionMidiDecoder(tfkl.Layer):
             inst_emb = self.instrument_emb_proj(self.timbre_coder(audio=audio))
         else:
           """synthesis"""
-          print(instrument_id)
           if isinstance(instrument_id, int):
             """centroid"""
             inst_emb = self.timbre_coder(inst=instrument_id)
