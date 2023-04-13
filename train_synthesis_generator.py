@@ -249,7 +249,7 @@ if __name__ == '__main__':
                       const=True, default=hp.timbre_encoding,
                       help='whether to use a pretrained timbre coder '
                            'to replace the instrument id input.')
-  parser.add_argument('--timbre_coder_type', type=str, default=hp.inst_emb_method,
+  parser.add_argument('--timbre_coder_type', type=str, default=hp.timbre_coder_type,
                       help='the method for producing instrument embeddings.')
 
   # Change hp according to argparse.

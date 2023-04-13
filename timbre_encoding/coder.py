@@ -4,6 +4,7 @@ import librosa
 import numpy as np
 import openl3
 import joblib
+from sklearn.preprocessing import normalize
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -48,13 +49,15 @@ class TimbreCoder():
             """time averaged openl3 embedding"""
             model = openl3.models.load_audio_embedding_model(
                 input_repr="mel128", content_type="music", embedding_size=512)
+            model.trainable = False
             return lambda x: np.mean(openl3.get_audio_embedding(x, sr=self.sample_rate,
                 model=model, center=False, hop_size=0.5, batch_size=128, verbose=0)[0], axis=-2)
         elif self.method == 'flat_triplet' or self.method == 'hierarchical_triplet':
             """pretrained triplet models"""
             model = tf.keras.models.load_model(self.model_dir, compile=False)
             backbone = model.get_layer('backbone')
-            return lambda x: backbone(x).numpy()
+            backbone.trainable = False
+            return lambda x: normalize(backbone(x).numpy())
         elif self.method == 'midi-ddsp':
             return None
         else:

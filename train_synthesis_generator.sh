@@ -33,9 +33,9 @@ reverb=true
 use_gan=true
 lambda_recon=1.0
 reverb_length=48000
-name=synthesis_generator_without_timbre_coder
-timbre_encoding=false
-timbre_coder_type='lda'
+name=synthesis_generator_hierarchical_triplet_v1
+timbre_encoding=true
+timbre_coder_type='hierarchical_triplet'
 
 python train_synthesis_generator.py --batch_size $batch_size \
   --training_steps $training_steps \
