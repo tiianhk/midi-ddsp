@@ -310,6 +310,12 @@ if __name__ == '__main__':
   # Start training loop
   start_step = int(os.path.basename(hp.restore_path)) if hp.restore_path else 1
 
+  """(haokun)
+  set the seed again to exclude the effect caused by loading triplet timbre coders
+  this ensures that every synthesis generator has the same synth coder (i.e. ddsp inference)
+  """
+  set_seed(hp.seed)
+
   if hp.mode == 'train':
     if hp.train_synth_coder_first:
       hp.run_synth_coder_only = True

@@ -38,7 +38,7 @@ def plot_spec(wav, sr, title='', vmin=-8, vmax=1, save_path=None):
     plt.savefig(save_path)
     plt.close()
 
-"""(haokun) check if this needs to be modified, since two new hp are added."""
+
 def get_hp(file):
   """Retrieve hyperparameters from log files."""
   with open(file, 'r') as f:
