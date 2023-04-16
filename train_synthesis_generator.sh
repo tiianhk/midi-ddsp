@@ -33,9 +33,10 @@ reverb=true
 use_gan=true
 lambda_recon=1.0
 reverb_length=48000
-name=synthesis_generator_flat_debug_v2
+synth_coder_path=./logs/synth_coder/synth_coder
+name=synthesis_generator_hierarchical_triplet_v3
 timbre_encoding=true
-timbre_coder_type='flat_triplet'
+timbre_coder_type=hierarchical_triplet
 
 python train_synthesis_generator.py --batch_size $batch_size \
   --training_steps $training_steps \
@@ -57,6 +58,7 @@ python train_synthesis_generator.py --batch_size $batch_size \
   --use_gan $use_gan \
   --lambda_recon $lambda_recon \
   --reverb_length $reverb_length \
+  --synth_coder_path $synth_coder_path \
   --timbre_encoding $timbre_encoding \
   --timbre_coder_type $timbre_coder_type
 

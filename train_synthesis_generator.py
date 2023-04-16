@@ -182,6 +182,9 @@ if __name__ == '__main__':
   parser.add_argument('--restore_path', type=str, default=hp.restore_path,
                       help='The path to the model weights file for restore '
                            'training.')
+  """load weights for synth coder"""
+  parser.add_argument('--synth_coder_path', type=str, default=hp.synth_coder_path,
+                      help='The path to the weights of the synth coder.')
   parser.add_argument('--midi_audio_loss', type=str2bool, nargs='?', const=True,
                       default=hp.midi_audio_loss,
                       help='Whether to use '
@@ -286,6 +289,15 @@ if __name__ == '__main__':
   if hp.restore_path:
     model.load_weights(hp.restore_path)
     log_dir = os.path.dirname(hp.restore_path)
+  
+  if hp.synth_coder_path:
+    if hp.synth_coder_training_steps != 0:
+      hp.training_steps = hp.training_steps - hp.synth_coder_training_steps
+      hp.synth_coder_training_steps = 0
+    hp.train_synth_coder_first = False
+    model.synth_coder.load_weights(hp.synth_coder_path)
+    if not hp.add_synth_loss:
+      model.freeze_synth_coder()
 
   writer = tf.summary.create_file_writer(log_dir)
   log_path = os.path.join(log_dir, 'train.log')
@@ -309,12 +321,6 @@ if __name__ == '__main__':
 
   # Start training loop
   start_step = int(os.path.basename(hp.restore_path)) if hp.restore_path else 1
-
-  """(haokun)
-  set the seed again to exclude the effect caused by loading triplet timbre coders
-  this ensures that every synthesis generator has the same synth coder (i.e. ddsp inference)
-  """
-  set_seed(hp.seed)
 
   if hp.mode == 'train':
     if hp.train_synth_coder_first:

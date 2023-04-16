@@ -31,6 +31,7 @@ class hparams:
   mode = 'train'  # train, eval
   data_dir = None
   restore_path = None
+  synth_coder_path = None
 
   # Model Parameters
   nhid = 256
