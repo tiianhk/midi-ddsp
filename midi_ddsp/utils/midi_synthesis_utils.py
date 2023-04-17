@@ -252,21 +252,37 @@ def batch_conditioning_df_to_audio(synthesis_generator, conditioning_df_all,
   return midi_audio, midi_control_params, midi_synth_params
 
 
-def synthesize_mono_midi(synthesis_generator, expression_generator, midi_file,
-                         instrument_id, output_dir,
-                         pitch_offset=0,
-                         speed_rate=1,
-                         display_progressbar=True):
-  """Synthesize monophonic MIDI file.
-  If MIDI file contains more than one part, will synthesize the first part."""
+def expression_generator_inference(expression_generator, midi_file, 
+                                   instrument_id, pitch_offset, speed_rate):
   note_sequence = mono_midi_to_note_sequence(midi_file,
                                              tf.constant([instrument_id]),
                                              pitch_offset=pitch_offset,
                                              speed_rate=speed_rate)
   expression_generator_outputs = expression_generator(note_sequence, out=None,
                                                       training=False)
+  return expression_generator_outputs['output'], note_sequence
+
+
+def synthesize_mono_midi(synthesis_generator, expression_generator, midi_file,
+                         instrument_id, output_dir,
+                         pitch_offset=0,
+                         speed_rate=1,
+                         display_progressbar=True):
+  """Synthesize monophonic MIDI file.
+  If MIDI file contains more than one part, will synthesize the first part.
+  For expression generator interpolation happens between the outputs."""
+  if isinstance(instrument_id, int):
+    expression_controls, note_sequence = expression_generator_inference(
+      expression_generator, midi_file, instrument_id, pitch_offset, speed_rate)
+  elif isinstance(instrument_id, tuple):
+    inst1, inst2, interp_ratio = instrument_id
+    exp_ctrl1, note_sequence = expression_generator_inference(
+      expression_generator, midi_file, inst1, pitch_offset, speed_rate)
+    exp_ctrl2, _ = expression_generator_inference(
+      expression_generator, midi_file, inst2, pitch_offset, speed_rate)
+    expression_controls = interp_ratio * exp_ctrl1 + (1 - interp_ratio) * exp_ctrl2
   conditioning_df = expression_generator_output_to_conditioning_df(
-    expression_generator_outputs['output'], note_sequence)
+    expression_controls, note_sequence)
   midi_audio, midi_control_params, midi_synth_params = conditioning_df_to_audio(
     synthesis_generator, conditioning_df, instrument_id,
     display_progressbar=display_progressbar)

@@ -20,6 +20,7 @@ import os
 import sys
 import logging
 import argparse
+import numpy as np
 
 from midi_ddsp.data_handling.get_dataset import get_dataset
 from midi_ddsp.utils.training_utils import print_hparams, set_seed, \
@@ -133,6 +134,9 @@ def train(training_data, training_steps, start_step=1):
     # DDSP Inference training finished.
     # Start training Synthesis Generator and
     # dump dataset for expression generator.
+    # ---(haokun)
+    # If a trained synth coder is used, this will be skipped
+    # as hp.synth_coder_training_steps is set to 0.
     if (step - start_step + 1) == hp.synth_coder_training_steps:
       hp.run_synth_coder_only = False
       if not hp.add_synth_loss:
@@ -291,11 +295,17 @@ if __name__ == '__main__':
     log_dir = os.path.dirname(hp.restore_path)
   
   if hp.synth_coder_path:
+    """overwrite training steps by skipping synth coder"""
     if hp.synth_coder_training_steps != 0:
       hp.training_steps = hp.training_steps - hp.synth_coder_training_steps
       hp.synth_coder_training_steps = 0
+    """do not need to train synth coder first"""
     hp.train_synth_coder_first = False
+    """load weights for the synth coder and reverb module"""
     model.synth_coder.load_weights(hp.synth_coder_path)
+    model.reverb_module.set_weights([np.load(os.path.join(
+      os.path.dirname(hp.synth_coder_path),'reverb.npy'))])
+    """freeze synth coder and start training midi decoder"""
     if not hp.add_synth_loss:
       model.freeze_synth_coder()
 

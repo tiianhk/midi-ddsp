@@ -16,14 +16,14 @@ class TimbreCoder():
         self.method = method
         self.model_dir = os.path.join('./timbre_encoding/models/', method)
         # to-do: store centroids of midi-ddsp computed by synthesis_generator.midi_decoder.instrument_emb
-        self.centroids = np.load(os.path.join('./timbre_encoding/centroids/', method+'.npy'))
+        self.centroids = np.float32(np.load(os.path.join('./timbre_encoding/centroids/', method+'.npy')))
         self.preprocessor = self._load_preprocessor()
         self.coder = self._load_coder()
         self.sample_rate = 16000
         self.ndim = self._ndim_dict()[method]
 
     def _ndim_dict(self):
-        return {'lda': 12, 'openl3': 512, 'flat_triplet': 64, 'hierarchical_triplet': 64, 'midi-ddsp': 64}
+        return {'lda': 12, 'openl3': 512, 'flat_triplet': 64, 'hierarchical_triplet': 64, 'midi_ddsp': 64}
 
     def _load_preprocessor(self):
         if self.method == 'lda':
@@ -35,7 +35,7 @@ class TimbreCoder():
             """melspectrogram"""
             return lambda y: librosa.feature.melspectrogram(
                 y=y, sr=self.sample_rate, power=1)[...,np.newaxis]
-        elif self.method == 'midi-ddsp':
+        elif self.method == 'midi_ddsp':
             return None
         else:
             raise ValueError('invalid method')
@@ -58,13 +58,13 @@ class TimbreCoder():
             backbone = model.get_layer('backbone')
             backbone.trainable = False
             return lambda x: normalize(backbone(x).numpy())
-        elif self.method == 'midi-ddsp':
+        elif self.method == 'midi_ddsp':
             return None
         else:
             raise ValueError('invalid method')
 
     def get_embedding_from_audio(self, audio):
-        assert self.method != 'midi-ddsp'
+        assert self.method != 'midi_ddsp'
         assert len(audio.shape)<=2 and audio.shape[-1]==64000
         self.batch = len(audio.shape)==2
         if isinstance(audio, tf.Tensor):
@@ -100,9 +100,7 @@ class TimbreCoder():
                     'openl3' shape (n, 512),
                     'flat_triplet' or 'hierarchical_triplet' shape (n, 64)
         """
-        # print('timbre coder is called.')
         if audio is not None:
-            # print(f'processing audio with shape {audio.shape}')
             return self.get_embedding_from_audio(audio)
         elif inst is not None:
             assert inst < len(self.centroids)
@@ -111,5 +109,8 @@ class TimbreCoder():
             assert inst1 < len(self.centroids) and inst2 < len(self.centroids)
             assert interp_ratio > 0 and interp_ratio < 1
             emb = interp_ratio * self.centroids[inst1] + (1 - interp_ratio) * self.centroids[inst2]
-            return emb[np.newaxis,...]
+            emb = emb[np.newaxis,...]
+            if self.method == 'flat_triplet' or self.method == 'hierarchical_triplet':
+                emb = normalize(emb)
+            return emb
 

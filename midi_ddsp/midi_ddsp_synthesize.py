@@ -45,6 +45,28 @@ FRAME_RATE = 250
 SAMPLE_RATE = 16000
 
 
+def get_model(expression_generator_path, synthesis_generator_path, 
+              activate_interp_for_synthesis_generator_without_timbre_encoding=False):
+  """Load weights for self-trained model."""
+  n_out = 6
+  expression_generator = ExpressionGenerator(n_out=n_out, nhid=128)
+  fake_data = get_fake_data_expression_generator(n_out)
+  _ = expression_generator(fake_data['cond'], out=fake_data['target'], training=True)
+  expression_generator.load_weights(expression_generator_path)
+  log_path = os.path.join(os.path.dirname(synthesis_generator_path), 'train.log')
+  hp_dict = get_hp(log_path)
+  if activate_interp_for_synthesis_generator_without_timbre_encoding:
+    assert hp_dict.timbre_encoding == False
+    hp_dict.timbre_encoding = True
+    hp_dict.timbre_coder_type = 'midi_ddsp'
+  for k, v in hp_dict.items():
+    setattr(hp, k, v)
+  synthesis_generator = get_synthesis_generator(hp)
+  synthesis_generator._build(get_fake_data_synthesis_generator(hp))
+  synthesis_generator.load_weights(synthesis_generator_path)
+  return expression_generator, synthesis_generator
+
+
 def load_pretrained_model(synthesis_generator_path=None,
                           expression_generator_path=None):
   """Load pre-trained model weights."""

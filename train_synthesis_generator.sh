@@ -15,7 +15,7 @@
 #!/bin/bash
 
 batch_size=16
-training_steps=50000
+training_steps=70000
 eval_interval=10000
 checkpoint_save_interval=10000
 synth_coder_training_steps=10000
@@ -33,10 +33,10 @@ reverb=true
 use_gan=true
 lambda_recon=1.0
 reverb_length=48000
-synth_coder_path=./logs/synth_coder/synth_coder
-name=synthesis_generator_hierarchical_triplet_v3
-timbre_encoding=true
-timbre_coder_type=hierarchical_triplet
+synth_coder_path=./logs/synth_coder_og/synth_coder
+name=synthesis_generator_without_timbre_coder_v6
+timbre_encoding=false
+timbre_coder_type=lda
 
 python train_synthesis_generator.py --batch_size $batch_size \
   --training_steps $training_steps \
