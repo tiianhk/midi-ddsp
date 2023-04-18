@@ -137,6 +137,7 @@ class ExpressionMidiDecoder(tfkl.Layer):
               inst_emb_1 = self.timbre_coder(inst=inst1)
               inst_emb_2 = self.timbre_coder(inst=inst2)
               inst_emb = tf.linspace(inst_emb_1, inst_emb_2, z_midi_decoder.shape[1], axis=1)
+              inst_emb = tf.linalg.normalize(inst_emb[0], axis=1)[0][tf.newaxis,...]
           if self.timbre_coder.ndim != 64:
             inst_emb = self.instrument_emb_proj(inst_emb)
       if unpooled_flag:
