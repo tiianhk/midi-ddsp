@@ -110,6 +110,7 @@ class ExpressionMidiDecoder(tfkl.Layer):
     z_midi_decoder = self.z_preconditioning_stack(z_conditioning)
     """timbre encoding"""
     if self.multi_instrument:
+      unpooled_flag = False
       if self.timbre_coder is None:
         if isinstance(instrument_id, int):
           instrument_id = tf.constant([instrument_id])
@@ -128,12 +129,21 @@ class ExpressionMidiDecoder(tfkl.Layer):
             inst_emb = self.timbre_coder(inst=instrument_id)
           elif isinstance(instrument_id, tuple):
             """interpolate between centroids"""
-            inst1, inst2, interp_ratio = instrument_id
-            inst_emb = self.timbre_coder(inst1=inst1, inst2=inst2, interp_ratio=interp_ratio)
+            inst1, inst2, interp_ratio, is_gradual = instrument_id
+            if is_gradual == False:
+              inst_emb = self.timbre_coder(inst1=inst1, inst2=inst2, interp_ratio=interp_ratio)
+            else:
+              unpooled_flag = True
+              inst_emb_1 = self.timbre_coder(inst=inst1)
+              inst_emb_2 = self.timbre_coder(inst=inst2)
+              inst_emb = tf.linspace(inst_emb_1, inst_emb_2, z_midi_decoder.shape[1], axis=1)
           if self.timbre_coder.ndim != 64:
             inst_emb = self.instrument_emb_proj(inst_emb)
-      instrument_z = tf.tile(
-        inst_emb[:, tf.newaxis, :], [1, z_midi_decoder.shape[1], 1])
+      if unpooled_flag:
+        instrument_z = inst_emb
+      else:
+        instrument_z = tf.tile(
+          inst_emb[:, tf.newaxis, :], [1, z_midi_decoder.shape[1], 1])
       z_midi_decoder = tf.concat([z_midi_decoder, instrument_z], -1)
 
     # --- MIDI Decoding

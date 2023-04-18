@@ -275,7 +275,7 @@ def synthesize_mono_midi(synthesis_generator, expression_generator, midi_file,
     expression_controls, note_sequence = expression_generator_inference(
       expression_generator, midi_file, instrument_id, pitch_offset, speed_rate)
   elif isinstance(instrument_id, tuple):
-    inst1, inst2, interp_ratio = instrument_id
+    inst1, inst2, interp_ratio, is_gradual = instrument_id
     exp_ctrl1, note_sequence = expression_generator_inference(
       expression_generator, midi_file, inst1, pitch_offset, speed_rate)
     exp_ctrl2, _ = expression_generator_inference(

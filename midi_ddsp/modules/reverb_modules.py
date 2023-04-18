@@ -65,7 +65,7 @@ class ReverbModules(tfkl.Layer):
       ir_magnitudes = self.magnitudes_embedding(reverb_number)
     else:
       """frequency domain interpolation"""
-      reverb_number_1, reverb_number_2, interp_ratio = reverb_number
+      reverb_number_1, reverb_number_2, interp_ratio, is_gradual = reverb_number
       ir_1 = self.magnitudes_embedding(reverb_number_1).numpy()
       ir_2 = self.magnitudes_embedding(reverb_number_2).numpy()
       IR_1 = np.fft.rfft(ir_1)
