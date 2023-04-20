@@ -264,7 +264,8 @@ def expression_generator_inference(expression_generator, midi_file,
 
 
 def synthesize_mono_midi(synthesis_generator, expression_generator, midi_file,
-                         instrument_id, output_dir,
+                         instrument_id, output_dir=None,
+                         output_suffix='',
                          pitch_offset=0,
                          speed_rate=1,
                          display_progressbar=True):
@@ -288,8 +289,7 @@ def synthesize_mono_midi(synthesis_generator, expression_generator, midi_file,
     display_progressbar=display_progressbar)
   if output_dir is not None:
     save_wav(midi_audio[0].numpy(), os.path.join(output_dir, os.path.basename(
-      midi_file).replace('.mid', '.wav')),
-             16000)
+      midi_file)[:-4]+output_suffix+'.wav'), 16000)
   return midi_audio, midi_control_params, midi_synth_params, conditioning_df
 
 

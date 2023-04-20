@@ -15,7 +15,7 @@
 #!/bin/bash
 
 batch_size=16
-training_steps=70000
+training_steps=110000
 eval_interval=10000
 checkpoint_save_interval=10000
 synth_coder_training_steps=10000
@@ -34,7 +34,7 @@ use_gan=true
 lambda_recon=1.0
 reverb_length=48000
 synth_coder_path=./logs/synth_coder_og/synth_coder
-name=synthesis_generator_without_timbre_coder_v6
+name=synthesis_generator_without_timbre_coder_v7
 timbre_encoding=false
 timbre_coder_type=lda
 

@@ -140,3 +140,9 @@ dmypy.json
 *.SBATCH
 slurm-*
 
+# synthesis output
+outputs/
+
+# large pre-computed files
+timbre_encoding/precompute
+
