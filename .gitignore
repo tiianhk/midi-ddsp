@@ -143,6 +143,7 @@ slurm-*
 # synthesis output
 outputs/
 
-# large pre-computed files
+# timbre coder
+timbre_encoding/centroids/midi_ddsp.npy
 timbre_encoding/precompute
 

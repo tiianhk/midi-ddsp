@@ -55,15 +55,21 @@ def get_model(expression_generator_path, synthesis_generator_path,
   expression_generator.load_weights(expression_generator_path)
   log_path = os.path.join(os.path.dirname(synthesis_generator_path), 'train.log')
   hp_dict = get_hp(log_path)
-  if activate_interp_for_synthesis_generator_without_timbre_encoding:
-    assert hp_dict.timbre_encoding == False
-    hp_dict.timbre_encoding = True
-    hp_dict.timbre_coder_type = 'midi_ddsp'
   for k, v in hp_dict.items():
     setattr(hp, k, v)
   synthesis_generator = get_synthesis_generator(hp)
   synthesis_generator._build(get_fake_data_synthesis_generator(hp))
   synthesis_generator.load_weights(synthesis_generator_path)
+  if activate_interp_for_synthesis_generator_without_timbre_encoding:
+    assert hp.timbre_encoding == False
+    hp.timbre_encoding = True
+    hp.timbre_coder_type = 'midi_ddsp'
+    """Dump instrument embeddings as centroids."""
+    embs = np.array([synthesis_generator.midi_decoder.instrument_emb(i).numpy() for i in range(13)])
+    np.save('./timbre_encoding/centroids/midi_ddsp', embs)
+    synthesis_generator = get_synthesis_generator(hp)
+    synthesis_generator._build(get_fake_data_synthesis_generator(hp))
+    synthesis_generator.load_weights(synthesis_generator_path)
   return expression_generator, synthesis_generator
 
 

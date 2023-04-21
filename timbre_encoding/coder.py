@@ -15,7 +15,6 @@ class TimbreCoder():
     def __init__(self, method):
         self.method = method
         self.model_dir = os.path.join('./timbre_encoding/models/', method)
-        # to-do: store centroids of midi-ddsp computed by synthesis_generator.midi_decoder.instrument_emb
         centroids_filename = 'openl3' if method == 'openl3_precompute' else method
         self.centroids = np.float32(np.load(os.path.join(
             './timbre_encoding/centroids/', centroids_filename+'.npy')))
@@ -89,7 +88,6 @@ class TimbreCoder():
             raise ValueError('invalid method')
 
     def get_embedding_from_audio(self, audio):
-        assert self.method != 'midi_ddsp'
         assert len(audio.shape)<=2 and audio.shape[-1]==64000
         self.batch = len(audio.shape)==2
         if isinstance(audio, tf.Tensor):
