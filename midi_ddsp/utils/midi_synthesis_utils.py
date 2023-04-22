@@ -281,6 +281,11 @@ def synthesize_mono_midi(synthesis_generator, expression_generator, midi_file,
       expression_generator, midi_file, inst1, pitch_offset, speed_rate)
     exp_ctrl2, _ = expression_generator_inference(
       expression_generator, midi_file, inst2, pitch_offset, speed_rate)
+    if is_gradual:
+      """interp_ratio changes along the transition"""
+      note_onsets = tf.convert_to_tensor([tf.math.reduce_sum(note_sequence['note_length'][:,:i+1,:]) \
+                      for i in range(note_sequence['note_length'].shape[1])])[tf.newaxis,:,tf.newaxis]
+      interp_ratio = 1 - note_onsets / note_onsets[:,-1,:]
     expression_controls = interp_ratio * exp_ctrl1 + (1 - interp_ratio) * exp_ctrl2
   conditioning_df = expression_generator_output_to_conditioning_df(
     expression_controls, note_sequence)
