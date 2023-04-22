@@ -120,10 +120,10 @@ class ExpressionMidiDecoder(tfkl.Layer):
           """autoencoder"""
           if self.timbre_coder.ndim == 64:
             if self.timbre_coder.method == 'midi_ddsp':
-              print('Warning: timbre coder only contains centroids. '
+              print('Warning: this timbre coder only contains centroids. '
                     'But it is asked to process audio input. '
                     'This should only appear when activating interpolation '
-                    'ability for model trained without timbre encoding.')
+                    'for model trained without timbre encoding.')
               inst_emb = self.timbre_coder(inst=int(instrument_id))
             else:
               inst_emb = self.timbre_coder(audio=audio)
